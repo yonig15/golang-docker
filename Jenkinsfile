@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "yoni/webapp"
+        DOCKER_IMAGE = "yoni15/webapp"
         LATEST_TAG = "latest"
         DOCKER_SERVICE = "golang_service"
         DOCKER_HUB = 'yonig15/webapp'
