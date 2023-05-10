@@ -1,7 +1,5 @@
 # Sample Golang app for CI
-This sample app is made to help other developers start working with docker and jenkins
-
-Its a work in progress so any comment and suggestion is well received
+The example application in the repository is a simple HTTP server that listens on a port and returns a "Hello, World!" message when accessed. The repository includes a Dockerfile that can be used to build a Docker image of the application
 
 ## Build base image
 ```
