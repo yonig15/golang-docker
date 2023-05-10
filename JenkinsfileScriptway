@@ -1,0 +1,67 @@
+node {
+    try {
+        stage('checkout') {
+        checkout scm
+        }
+        stage('Build image') {
+            //sh 'make build-base'
+            sh 'make build'
+        }
+        stage('Run tests') {
+            try {
+                sh 'make build-test'
+                sh 'make test-unit'
+            } catch (e) {
+                println "tests failed {e}"
+            }
+        }
+        stage('List contents of directory') {
+            sh 'ls -la'
+        }
+        stage('Push to docker hub') {
+                withCredentials([usernamePassword(credentialsId: 'dockerCredntials', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
+                    sh "echo $dockerHubPassword | docker login -u $dockerHubUser --password-stdin"
+                    sh 'make publish'
+                }
+        }
+
+        stage('Deploy to EC2') {
+            def PUB_DNS = 'ec2-13-53-98-71.eu-north-1.compute.amazonaws.com'
+            sshagent(['aws-ssh-key-golang']) {
+                sh """
+                    [ -d ~/.ssh ] || mkdir ~./ssh && chmod 700 ~/.ssh
+                    ssh-keyscan -t rsa,dsa ${PUB_DNS} >> ~/.ssh/known_hosts
+                """
+                sh "scp Makefile ubuntu@${PUB_DNS}:app/"
+
+                sh """    
+                    ssh ubuntu@${PUB_DNS} ' sudo docker pull venyabrodetskiy/golang-docker:latest '
+                    ssh ubuntu@${PUB_DNS} ' cd app && make run || true '
+                    ssh ubuntu@${PUB_DNS} ' sudo docker service update --image venyabrodetskiy/golang-docker:latest --update-parallelism 1 --update-delay 2s golangservice '
+                """
+            }
+        }
+
+    } catch(e) {
+        // println "I am in catch block $currentBuild.currentResult"
+        throw e
+    } finally {
+        stage('Slack notification') {
+            if (currentBuild.currentResult == 'SUCCESS') {
+                slackSend(
+                channel: '#general',
+                color: 'good',
+                message: "Pipeline ${currentBuild.fullDisplayName} succeded!",
+                username: 'jenkins-bot'
+                )
+            } else {
+                slackSend(
+                channel: '#general',
+                color: 'danger',
+                message: "Pipeline ${currentBuild.fullDisplayName} had problems!",
+                username: 'jenkins-bot'
+                )
+            }
+        }
+    }
+}
