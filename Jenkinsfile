@@ -43,9 +43,9 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'dockerCredntials', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
                     sh "echo $dockerHubPassword | docker login -u $dockerHubUser --password-stdin"
                 }
-                LATEST_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                sh "docker tag ${DOCKER_IMAGE}:${LATEST_TAG} ${DOCKER_HUB}"
-                sh "docker push ${DOCKER_IMAGE}:${LATEST_TAG}"
+                // LATEST_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                // sh "docker tag ${DOCKER_IMAGE}:${LATEST_TAG} ${DOCKER_HUB}"
+                // sh "docker push ${DOCKER_IMAGE}:${LATEST_TAG}"
             }
             }
             }
